@@ -1,6 +1,14 @@
 // /api/webhook.js
 // Stripe webhook - adds members to Airtable + sends welcome email
 
+// CRITICAL: Tell Vercel NOT to parse the body
+// Stripe needs the raw bytes to verify the signature
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -18,9 +26,10 @@ export default async function handler(req, res) {
 
   if (webhookSecret) {
     try {
-      const rawBody = await getRawBody(req);
-      const stripe  = await import('stripe');
-      const client  = stripe.default(process.env.STRIPE_SECRET_KEY);
+      // Get raw body as Buffer - required for Stripe signature verification
+      const rawBody = await getRawBuffer(req);
+      const stripe  = (await import('stripe')).default;
+      const client  = stripe(process.env.STRIPE_SECRET_KEY);
       event = client.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (err) {
       console.error('Webhook signature failed:', err.message);
@@ -31,6 +40,7 @@ export default async function handler(req, res) {
   }
 
   const type = event.type;
+  console.log('Webhook event received:', type);
 
   if (type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -47,7 +57,7 @@ export default async function handler(req, res) {
         joined: new Date().toISOString().split('T')[0]
       });
       await sendWelcomeEmail(resendKey, email, name, plan);
-      console.log(`Member added + emailed: ${email} as ${plan}`);
+      console.log('Member added + emailed:', email, 'as', plan);
     }
   }
 
@@ -80,125 +90,103 @@ export default async function handler(req, res) {
   if (type === 'customer.subscription.deleted') {
     const sub = event.data.object;
     await updateMemberStatus(airtableToken, BASE_ID, TABLE_ID, sub.customer, 'cancelled');
+    console.log('Member cancelled: customer', sub.customer);
   }
 
   return res.status(200).json({ received: true });
+}
+
+// ── Read raw body as Buffer - critical for Stripe signature verification ──
+function getRawBuffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk));
+    req.on('end',  ()    => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
 }
 
 // ── Send welcome email via Resend ──
 async function sendWelcomeEmail(apiKey, email, name, plan) {
   if (!apiKey) { console.log('Resend not configured - skipping email'); return; }
 
-  const firstName  = name ? name.split(' ')[0] : 'Mama';
-  const isVip      = plan === 'vip';
+  const firstName = name ? name.split(' ')[0] : 'Mama';
+  const isVip     = plan === 'vip';
+  const planBadge = isVip ? '✦ Lifetime VIP Member' : 'EVIE Access Member';
 
-  const planLabel  = isVip ? 'Lifetime VIP' : 'EVIE Access';
-  const planColor  = isVip ? '#c9963a' : '#c4614a';
-  const planBadge  = isVip ? '✦ Lifetime VIP Member' : 'EVIE Access Member';
-
-  const vipExtras  = isVip ? `
-    <div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:16px;padding:24px;margin:24px 0;text-align:center">
-      <p style="font-size:11px;font-weight:900;color:rgba(201,150,58,.8);letter-spacing:2px;text-transform:uppercase;margin:0 0 8px">You are a Founding Member</p>
-      <p style="font-family:Georgia,serif;font-size:20px;color:#fff;margin:0 0 8px;line-height:1.4">All 9 courses. The full Money Dashboard.<br/>VIP Inner Circle. Yours forever.</p>
-      <p style="font-size:12px;color:rgba(255,255,255,.45);margin:0">One payment. Lifetime access. Every future course included.</p>
-    </div>` : `
-    <div style="background:#fdf8f5;border-radius:16px;padding:20px;margin:24px 0;border:1px solid rgba(196,97,74,.12)">
-      <p style="font-size:13px;font-weight:700;color:#1a0d08;margin:0 0 6px">What you have access to right now:</p>
-      <p style="font-size:13px;color:#7a4a3a;line-height:1.7;margin:0">✓ Unlimited Evie AI chat<br/>✓ Courses 01 &amp; 02 — CEO Mindset + Find Your Niche<br/>✓ Content Planner with weekly ideas<br/>✓ Mama Circle community<br/>✓ Affiliate platform directory</p>
-      <p style="font-size:12px;color:#c4614a;font-weight:700;margin:12px 0 0">Upgrade to Lifetime VIP anytime to unlock all 9 courses + every feature.</p>
-    </div>`;
+  const vipExtras = isVip
+    ? `<div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:16px;padding:24px;margin:24px 0;text-align:center">
+        <p style="font-size:11px;font-weight:900;color:rgba(201,150,58,.8);letter-spacing:2px;text-transform:uppercase;margin:0 0 8px">You are a Founding Member</p>
+        <p style="font-family:Georgia,serif;font-size:20px;color:#fff;margin:0 0 8px;line-height:1.4">All 9 courses. The full Money Dashboard.<br/>VIP Inner Circle. Yours forever.</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.45);margin:0">One payment. Lifetime access. Every future course included.</p>
+      </div>`
+    : `<div style="background:#fdf8f5;border-radius:16px;padding:20px;margin:24px 0;border:1px solid rgba(196,97,74,.12)">
+        <p style="font-size:13px;font-weight:700;color:#1a0d08;margin:0 0 6px">What you have access to right now:</p>
+        <p style="font-size:13px;color:#7a4a3a;line-height:1.7;margin:0">
+          ✓ Unlimited Evie AI chat<br/>
+          ✓ Courses 01 &amp; 02 — CEO Mindset + Find Your Niche<br/>
+          ✓ Content Planner with weekly ideas<br/>
+          ✓ Mama Circle community<br/>
+          ✓ Affiliate platform directory
+        </p>
+        <p style="font-size:12px;color:#c4614a;font-weight:700;margin:12px 0 0">Upgrade to Lifetime VIP anytime to unlock all 9 courses + every feature.</p>
+      </div>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Welcome to Hey Evie</title>
-</head>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Welcome to Hey Evie</title></head>
 <body style="margin:0;padding:0;background:#f5ede8;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif">
 <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-
-  <!-- Header -->
   <div style="text-align:center;margin-bottom:24px">
     <p style="font-family:Georgia,serif;font-size:28px;font-weight:700;color:#1a0d08;margin:0">Hey Evie</p>
     <p style="font-size:11px;color:#b09080;margin:4px 0 0;letter-spacing:2px;text-transform:uppercase">For moms who mean business</p>
   </div>
-
-  <!-- Main card -->
   <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(26,13,8,.08)">
-
-    <!-- Top banner -->
     <div style="background:linear-gradient(135deg,#c4614a,#d4507a);padding:32px 28px;text-align:center">
       <p style="font-size:11px;font-weight:900;color:rgba(255,255,255,.7);letter-spacing:2px;text-transform:uppercase;margin:0 0 10px">${planBadge}</p>
-      <p style="font-family:Georgia,serif;font-size:30px;color:#fff;margin:0 0 8px;line-height:1.2">Welcome to the circle,<br/>${firstName}! &#129293;</p>
-      <p style="font-size:14px;color:rgba(255,255,255,.75);margin:0;line-height:1.6">You just made one of the best decisions<br/>for your creator business.</p>
+      <p style="font-family:Georgia,serif;font-size:28px;color:#fff;margin:0 0 8px;line-height:1.2">Welcome to the circle,<br/>${firstName}!</p>
+      <p style="font-size:14px;color:rgba(255,255,255,.75);margin:0;line-height:1.6">You just made one of the best decisions for your creator business.</p>
     </div>
-
-    <!-- Body -->
     <div style="padding:28px">
-
       <p style="font-size:15px;color:#3a1e14;line-height:1.75;margin:0 0 20px">Hey ${firstName}! I am so excited you are here. I built Hey Evie because I was a mom of four figuring out content creation completely alone — and I knew there had to be a better way. You are exactly who this was made for.</p>
-
       ${vipExtras}
-
-      <!-- How to get in -->
       <div style="background:linear-gradient(135deg,rgba(196,97,74,.06),rgba(212,80,122,.04));border-radius:16px;padding:20px;margin:0 0 24px;border:1px solid rgba(196,97,74,.12)">
-        <p style="font-size:13px;font-weight:900;color:#c4614a;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px">How to get started — 2 minutes</p>
-        <div style="display:flex;align-items:flex-start;margin-bottom:10px">
-          <div style="width:24px;height:24px;border-radius:50%;background:#c4614a;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;line-height:24px;text-align:center">1</div>
-          <p style="font-size:13px;color:#3a1e14;line-height:1.6;margin:0">Go to <a href="https://app.tryheyevie.com" style="color:#c4614a;font-weight:700;text-decoration:none">app.tryheyevie.com</a></p>
-        </div>
-        <div style="display:flex;align-items:flex-start;margin-bottom:10px">
-          <div style="width:24px;height:24px;border-radius:50%;background:#c4614a;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;line-height:24px;text-align:center">2</div>
-          <p style="font-size:13px;color:#3a1e14;line-height:1.6;margin:0">Click <strong>Create Account</strong> and use <strong>this email address</strong> — your access is tied to it</p>
-        </div>
-        <div style="display:flex;align-items:flex-start">
-          <div style="width:24px;height:24px;border-radius:50%;background:#c4614a;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;line-height:24px;text-align:center">3</div>
-          <p style="font-size:13px;color:#3a1e14;line-height:1.6;margin:0">Tell Evie your niche and say hi — she is ready for you</p>
-        </div>
+        <p style="font-size:13px;font-weight:900;color:#c4614a;text-transform:uppercase;letter-spacing:1px;margin:0 0 14px">How to get started — 2 minutes</p>
+        <p style="font-size:13px;color:#3a1e14;line-height:1.8;margin:0">
+          <strong>1.</strong> Go to <a href="https://app.tryheyevie.com" style="color:#c4614a;font-weight:700;text-decoration:none">app.tryheyevie.com</a><br/>
+          <strong>2.</strong> Click Create Account and use <strong>this exact email address</strong><br/>
+          <strong>3.</strong> Tell Evie your niche and say hi — she is ready for you
+        </p>
       </div>
-
-      <!-- No code note -->
       <div style="background:#edf6f1;border-radius:12px;padding:14px 16px;margin:0 0 24px;border-left:4px solid #2a7a50">
-        <p style="font-size:13px;color:#2a7a50;font-weight:700;margin:0">No access code needed! Your email is your key. Just create your account and you are in.</p>
+        <p style="font-size:13px;color:#2a7a50;font-weight:700;margin:0">No access code needed — your email is your key. Create your account and you are in automatically.</p>
       </div>
-
-      <!-- CTA button -->
       <div style="text-align:center;margin:0 0 24px">
-        <a href="https://app.tryheyevie.com" style="display:inline-block;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:15px;font-weight:800;text-decoration:none;border-radius:26px;padding:14px 36px;letter-spacing:.3px">Open Hey Evie &#8594;</a>
+        <a href="https://app.tryheyevie.com" style="display:inline-block;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:15px;font-weight:800;text-decoration:none;border-radius:26px;padding:14px 36px">Open Hey Evie &rarr;</a>
       </div>
-
       <p style="font-size:13px;color:#9a7060;line-height:1.75;margin:0">I cannot wait to see what you build, ${firstName}. You already made the hardest decision — you chose yourself. Now let Evie help you make it real.</p>
-
       <p style="font-size:13px;color:#9a7060;margin:16px 0 0">With love,<br/><strong style="color:#1a0d08">Simone</strong><br/><span style="font-size:12px;color:#b09080">Founder, Hey Evie &bull; Mom of Four</span></p>
-
     </div>
   </div>
-
-  <!-- Footer -->
   <div style="text-align:center;padding:20px 0;margin-top:8px">
     <p style="font-size:11px;color:#b09080;margin:0;line-height:1.8">
       &copy; 2026 Hey Evie &bull; <a href="https://tryheyevie.com" style="color:#b09080;text-decoration:none">tryheyevie.com</a><br/>
       Questions? <a href="mailto:heyevie@tryheyevie.com" style="color:#c4614a;text-decoration:none;font-weight:700">heyevie@tryheyevie.com</a><br/>
-      <a href="https://tryheyevie.com/privacy" style="color:#b09080;text-decoration:none">Privacy Policy</a> &bull; <a href="https://tryheyevie.com/terms" style="color:#b09080;text-decoration:none">Terms of Service</a>
+      <a href="https://tryheyevie.com/privacy" style="color:#b09080;text-decoration:none">Privacy</a> &bull; <a href="https://tryheyevie.com/terms" style="color:#b09080;text-decoration:none">Terms</a>
     </p>
   </div>
-
 </div>
 </body>
 </html>`;
 
   const subject = isVip
-    ? `You're in, ${firstName}! Your Lifetime VIP access is ready ✦`
-    : `Welcome to Hey Evie, ${firstName}! Your account is ready 🌸`;
+    ? `You are in, ${firstName}! Your Lifetime VIP access is ready`
+    : `Welcome to Hey Evie, ${firstName}! Your account is ready`;
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type':  'application/json'
-      },
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from:    'Simone at Hey Evie <heyevie@tryheyevie.com>',
         to:      [email],
@@ -206,12 +194,10 @@ async function sendWelcomeEmail(apiKey, email, name, plan) {
         html:    html
       })
     });
-
     if (!response.ok) {
-      const err = await response.text();
-      console.error('Resend error:', err);
+      console.error('Resend error:', await response.text());
     } else {
-      console.log(`Welcome email sent to ${email}`);
+      console.log('Welcome email sent to', email);
     }
   } catch (err) {
     console.error('Email send failed:', err);
@@ -222,19 +208,14 @@ async function sendWelcomeEmail(apiKey, email, name, plan) {
 async function upsertMember(token, baseId, tableId, member) {
   if (!token) return;
   try {
-    const formula  = encodeURIComponent(`LOWER({email})=LOWER("${member.email}")`);
-    const checkUrl = `https://api.airtable.com/v0/${baseId}/${tableId}?filterByFormula=${formula}&maxRecords=1`;
-    const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-    const checkData= await checkRes.json();
-
-    const fields = {
-      email: member.email, name: member.name, plan: member.plan,
-      status: member.status, stripe_id: member.stripe_id, joined: member.joined
-    };
+    const formula   = encodeURIComponent(`LOWER({email})=LOWER("${member.email}")`);
+    const checkUrl  = `https://api.airtable.com/v0/${baseId}/${tableId}?filterByFormula=${formula}&maxRecords=1`;
+    const checkRes  = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    const checkData = await checkRes.json();
+    const fields    = { email: member.email, name: member.name, plan: member.plan, status: member.status, stripe_id: member.stripe_id, joined: member.joined };
 
     if (checkData.records && checkData.records.length > 0) {
-      const id = checkData.records[0].id;
-      await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}/${id}`, {
+      await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}/${checkData.records[0].id}`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields })
@@ -253,27 +234,16 @@ async function upsertMember(token, baseId, tableId, member) {
 async function updateMemberStatus(token, baseId, tableId, stripeId, status) {
   if (!token || !stripeId) return;
   try {
-    const formula  = encodeURIComponent(`{stripe_id}="${stripeId}"`);
-    const checkUrl = `https://api.airtable.com/v0/${baseId}/${tableId}?filterByFormula=${formula}&maxRecords=1`;
-    const checkRes = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-    const checkData= await checkRes.json();
+    const formula   = encodeURIComponent(`{stripe_id}="${stripeId}"`);
+    const checkUrl  = `https://api.airtable.com/v0/${baseId}/${tableId}?filterByFormula=${formula}&maxRecords=1`;
+    const checkRes  = await fetch(checkUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    const checkData = await checkRes.json();
     if (checkData.records && checkData.records.length > 0) {
-      const id = checkData.records[0].id;
-      await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}/${id}`, {
+      await fetch(`https://api.airtable.com/v0/${baseId}/${tableId}/${checkData.records[0].id}`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ fields: { status } })
       });
     }
   } catch (err) { console.error('Airtable status update error:', err); }
-}
-
-// ── Read raw body for Stripe signature verification ──
-async function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
-    req.on('end',  ()    => resolve(data));
-    req.on('error', reject);
-  });
 }
