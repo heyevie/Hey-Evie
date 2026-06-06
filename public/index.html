@@ -555,7 +555,7 @@ var state={
   messages:ls("ev_msgs",[]),
   tab:"home",input:"",loading:false,
   likes:ls("ev_likes",{}),
-  deals:ls("ev_deals",[]),
+  deals:(function(){var d=ls("ev_deals",[]);return d.filter(function(x){return x.id&&x.brand&&x.brand!=="Bloom Nutrition"&&x.brand!=="Amazon Storefront";});})(),
   calPosts:ls("ev_cal",{}),calWeek:0,calEditDay:null,
   activeCourse:null,activeModule:null,activeModuleIdx:null,
   newDeal:{brand:"",value:"",status:"pitched"},showAdd:false,genLoad:null,
@@ -1117,20 +1117,12 @@ function buildCreate(p){
       +'</div></div>';
   }
 
-  var hookCategories=Object.keys(hooks);
-  var activeCat=state.hookCategory||hookCategories[0];
-  var catHooks=hooks[activeCat]||[];
+  var catHooks=Array.isArray(hooks)?hooks:(hooks[Object.keys(hooks)[0]]||[]);
   var freshHooks=state.freshHooks||[];
 
   return '<div style="flex:1;overflow-y:auto;padding:0 0 100px">'
     +'<div style="padding:14px 14px 0"><h2 style="font-family:\'Playfair Display\',serif;font-size:23px;color:#1a0d08;margin-bottom:2px">Hook Vault</h2>'
     +'<p style="font-size:12px;color:#9a7060">Ready-to-use hooks for your '+niche+' niche</p></div>'
-    +'<div style="padding:10px 14px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none">'
-    +hookCategories.map(function(cat){
-      var active=cat===activeCat;
-      return '<button data-hcat="'+cat+'" style="flex-shrink:0;padding:7px 14px;border-radius:18px;border:1.5px solid '+(active?'#c4614a':'rgba(196,97,74,.2)')+';background:'+(active?'#c4614a':'#fff')+';color:'+(active?'#fff':'#c4614a')+';font-size:11px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif">'+cat+'</button>';
-    }).join('')
-    +'</div>'
     +'<div style="padding:0 14px">'
     +catHooks.map(function(h,i){
       return '<div style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid rgba(196,97,74,.08);display:flex;align-items:flex-start;gap:10px">'
