@@ -4,13 +4,11 @@
     { "source": "/api/airtable", "destination": "/api/airtable.js" },
     { "source": "/api/webhook", "destination": "/api/webhook.js" },
     { "source": "/api/password-reset", "destination": "/api/password-reset.js" },
-    { "source": "/api/reset-confirm", "destination": "/api/reset-confirm.js" }
-  ],
-  "routes": [
-    { "src": "/success", "dest": "/public/success.html" },
-    { "src": "/reset(.*)", "dest": "/public/reset.html" },
-    { "src": "/privacy", "dest": "/public/privacy.html" },
-    { "src": "/terms", "dest": "/public/terms.html" },
-    { "src": "/(.*)", "dest": "/public/index.html" }
+    { "source": "/api/reset-confirm", "destination": "/api/reset-confirm.js" },
+    { "source": "/success.html", "destination": "/public/success.html" },
+    { "source": "/reset.html", "destination": "/public/reset.html" },
+    { "source": "/privacy.html", "destination": "/public/privacy.html" },
+    { "source": "/terms.html", "destination": "/public/terms.html" },
+    { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
