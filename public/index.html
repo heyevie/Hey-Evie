@@ -2053,7 +2053,7 @@ function buildMoney(p,income){
     +'<p style="font-family:\'Playfair Display\',serif;font-size:34px;color:#fff;margin:3px 0">$'+income.toLocaleString()+'</p>'
     +(state.showGoalEdit
       ?'<div style="display:flex;gap:6px;align-items:center;margin-bottom:7px"><span style="font-size:11px;color:rgba(255,255,255,.5)">Goal: $</span><input id="goal-input" type="number" style="width:80px;padding:4px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:12px;font-weight:700;font-family:\'Nunito\',sans-serif" value="'+state.moneyGoal+'"/><button id="save-goal" style="background:#c4614a;color:#fff;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif">Save</button></div>'
-      :'<p style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:7px;cursor:pointer" id="edit-goal">Goal: $'+state.moneyGoal.toLocaleString()+'/month ✎</p>')
+      :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><p style="font-size:10px;color:rgba(255,255,255,.4);margin:0">Goal: $'+state.moneyGoal.toLocaleString()+'/month</p><button id="edit-goal" style="background:rgba(196,97,74,.3);color:#fff;border:none;border-radius:8px;padding:2px 8px;font-size:10px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif">Set Goal</button></div>')
     +'<div style="height:4px;background:rgba(255,255,255,.12);border-radius:10px;overflow:hidden;width:130px"><div style="height:100%;background:linear-gradient(90deg,#c4614a,#d4507a);border-radius:10px;width:'+pct+'%"></div></div>'
     +'</div>'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
