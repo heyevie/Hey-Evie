@@ -1,13 +1,17 @@
 // api/password-reset.js
-// Receives email, generates reset token, stores in Airtable, sends email via Resend
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email } = req.body || {};
+  // Parse body manually in case it comes in as a string
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch(e) { body = {}; }
+  }
+
+  const email = (body && body.email) ? body.email.trim().toLowerCase() : null;
   if (!email) return res.status(400).json({ error: 'Email required' });
 
   const airtableToken = process.env.AIRTABLE_TOKEN;
@@ -17,23 +21,25 @@ export default async function handler(req, res) {
 
   try {
     // 1. Find member by email
-    const formula  = encodeURIComponent('LOWER({email})=LOWER("' + email.trim() + '")');
+    const formula  = encodeURIComponent('LOWER({email})=LOWER("' + email + '")');
     const checkRes = await fetch(
       'https://api.airtable.com/v0/' + BASE_ID + '/' + TABLE_ID + '?filterByFormula=' + formula + '&maxRecords=1',
       { headers: { 'Authorization': 'Bearer ' + airtableToken } }
     );
     const checkData = await checkRes.json();
 
-    // Always return success even if email not found (security best practice)
+    console.log('Password reset: email=', email, 'records found=', checkData.records ? checkData.records.length : 0);
+
     if (!checkData.records || checkData.records.length === 0) {
+      console.log('Password reset: email not found in Airtable');
       return res.status(200).json({ success: true });
     }
 
     const record = checkData.records[0];
 
-    // 2. Generate a secure token + expiry (1 hour from now)
-    const token   = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    const expiry  = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    // 2. Generate token + expiry (1 hour)
+    const token  = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const expiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     // 3. Store token in Airtable
     await fetch(
@@ -46,12 +52,12 @@ export default async function handler(req, res) {
     );
 
     // 4. Send reset email via Resend
-    const resetUrl = 'https://app.tryheyevie.com/reset?token=' + token;
+    const resetUrl  = 'https://tryheyevee.com/reset.html?token=' + token;
     const firstName = (record.fields && record.fields.name) ? record.fields.name.split(' ')[0] : 'Mama';
 
     const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background:#f5ede8;font-family:Helvetica,Arial,sans-serif">'
       + '<div style="max-width:520px;margin:0 auto;padding:32px 16px">'
-      + '<div style="text-align:center;margin-bottom:20px"><p style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#1a0d08;margin:0">Hey Evie</p></div>'
+      + '<div style="text-align:center;margin-bottom:20px"><p style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:#1a0d08;margin:0">Hey Evee</p></div>'
       + '<div style="background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(26,13,8,.08)">'
       + '<div style="background:linear-gradient(135deg,#c4614a,#d4507a);padding:28px 24px;text-align:center">'
       + '<p style="font-family:Georgia,serif;font-size:22px;color:#fff;margin:0">Reset Your Password</p>'
@@ -61,21 +67,24 @@ export default async function handler(req, res) {
       + '<div style="text-align:center;margin:24px 0">'
       + '<a href="' + resetUrl + '" style="display:inline-block;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:15px;font-weight:800;text-decoration:none;border-radius:24px;padding:14px 36px">Reset My Password</a>'
       + '</div>'
-      + '<p style="font-size:12px;color:#9a7060;text-align:center;line-height:1.6;margin:0">This link expires in 1 hour.<br/>If you did not request this, just ignore this email — your account is safe.</p>'
+      + '<p style="font-size:12px;color:#9a7060;text-align:center;line-height:1.6;margin:0">This link expires in 1 hour.<br/>If you did not request this, just ignore this email.</p>'
       + '</div></div>'
-      + '<div style="text-align:center;padding:16px 0"><p style="font-size:11px;color:#b09080;margin:0">Hey Evie &bull; <a href="mailto:heyevie@tryheyevie.com" style="color:#c4614a;text-decoration:none">heyevie@tryheyevie.com</a></p></div>'
+      + '<div style="text-align:center;padding:16px 0"><p style="font-size:11px;color:#b09080;margin:0">Hey Evee &bull; <a href="mailto:hello@heyevee.com" style="color:#c4614a;text-decoration:none">hello@heyevee.com</a></p></div>'
       + '</div></body></html>';
 
-    await fetch('https://api.resend.com/emails', {
+    const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + resendKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from:    'Simone at Hey Evie <heyevie@tryheyevie.com>',
-        to:      [email.trim()],
-        subject: 'Reset your Hey Evie password',
+        from:    'Simone at Hey Evee <hello@heyevee.com>',
+        to:      [email],
+        subject: 'Reset your Hey Evee password',
         html:    html
       })
     });
+
+    const emailData = await emailRes.json();
+    console.log('Resend response:', JSON.stringify(emailData));
 
     return res.status(200).json({ success: true });
 
