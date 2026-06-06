@@ -1351,6 +1351,7 @@ var state={
   loginMode:"create",loginErr:"",loginForgotSent:false,
   onbStep:0,
   circleTab:"mama",
+  showProfileModal:null,
   chatOnboarded:ls("ev_chat_ob",false),
   chatStyle:ls("ev_chat_style",""),
   hookPage:0,
@@ -1485,6 +1486,7 @@ function buildMain(){
     +(state.showUpsell?buildUpsell():'')
     +(state.showCelebration?buildCelebration():'')
     +(state.showAffirmation?buildAffModal(aff):'')
+    +(state.showProfileModal?buildProfileModal(state.showProfileModal):'')
     +(state.showUpgradeSuccess?'<div style="position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:600;padding:14px 16px"><div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.3)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c4614a,#d4507a);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">&#10024;</div><div><p style="font-size:13px;font-weight:800;color:#fff;margin:0 0 2px">Welcome to Lifetime VIP!</p><p style="font-size:11px;color:rgba(255,255,255,.6);margin:0">All courses and features are now unlocked. \u2665</p></div></div></div>':'')
     +buildNav()
     +(state.tab==="home"?buildHome(p,income,aff):'')
@@ -2100,8 +2102,8 @@ function rPosts(posts){
     var canDelete=isFounder||(post.email&&myEmail&&post.email.toLowerCase()===myEmail.toLowerCase());
     return '<div style="background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:'+(postIsSimone?"0 4px 20px rgba(196,97,74,.12)":"0 2px 8px rgba(196,97,74,.05)")+';border:'+(postIsSimone?"1.5px solid rgba(196,97,74,.2)":"none")+'">'
       +'<div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">'
-      +'<div style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;background:'+(postIsSimone?"#c4614a":post.color||"#c4a090")+';flex-shrink:0">'+post.ini+'</div>'
-      +'<div style="flex:1"><div style="font-size:12px;font-weight:800;color:#1a0d08;display:flex;align-items:center;flex-wrap:wrap;gap:4px">'+post.name
+      +'<div style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#fff;background:'+(postIsSimone?"#c4614a":post.color||"#c4a090")+';flex-shrink:0">'+post.ini+'</div>'
+      +'<div style="flex:1"><div style="font-size:12px;font-weight:800;color:#1a0d08;display:flex;align-items:center;flex-wrap:wrap;gap:4px"><span data-profile="'+post.id+'" style="cursor:pointer">'+post.name+'</span>'
       +(postIsSimone?'<span style="background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:9px;font-weight:900;border-radius:8px;padding:2px 7px">FOUNDER</span>':'')+' </div>'
       +'<div style="font-size:10px;color:#b09080">'+esc(post.handle||"")+" "+post.time+'</div></div>'
       +(canDelete?'<button data-del="'+post.id+'" style="background:none;border:none;cursor:pointer;font-size:14px;color:#d4a0a0;padding:4px;flex-shrink:0" title="Delete post">&#128465;</button>':'')+' </div>'
@@ -2245,6 +2247,28 @@ function buildUpsell(){
     +'<div style="text-align:center;margin-bottom:16px"><p style="font-family:\'Playfair Display\',serif;font-size:38px;font-weight:700;color:#c9963a">$197</p><p style="font-size:11px;color:#b09080">one-time · lifetime access</p></div>'
     +'<button id="upsell-yes" style="'+btnP()+'">Claim Lifetime VIP — $197</button>'
     +'<button id="upsell-no" style="width:100%;padding:10px;background:transparent;color:#b09080;border:none;cursor:pointer;font-size:12px;font-family:\'Nunito\',sans-serif;margin-top:4px">Maybe later</button>'
+    +'</div></div>';
+}
+
+// Profile Modal
+function buildProfileModal(post){
+  if(!post)return '';
+  var isSimone=post.isSimone||(post.email&&post.email.toLowerCase()==='livingwithsimone@gmail.com');
+  return '<div style="position:fixed;inset:0;background:rgba(10,5,2,.7);z-index:600;display:flex;align-items:flex-end;justify-content:center" id="profile-overlay">'
+    +'<div style="background:#fff;border-radius:22px 22px 0 0;padding:24px 20px 40px;width:100%;max-width:430px">'
+    +'<div style="width:32px;height:4px;background:#e0d0c8;border-radius:10px;margin:0 auto 18px"></div>'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+    +'<div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;background:'+(isSimone?'#c4614a':post.color||'#c4a090')+';flex-shrink:0">'+post.ini+'</div>'
+    +'<div style="flex:1"><p style="font-size:15px;font-weight:800;color:#1a0d08;margin:0">'+esc(post.name||'')+'</p>'
+    +(isSimone?'<span style="background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:9px;font-weight:900;border-radius:8px;padding:2px 7px;margin-top:3px;display:inline-block">FOUNDER</span>':'')
+    +(post.niche?'<p style="font-size:11px;color:#c4614a;font-weight:700;margin:4px 0 0">'+esc(post.niche)+'</p>':'')
+    +'</div></div>'
+    +(post.bio?'<p style="font-size:13px;color:#3a1e14;line-height:1.65;margin-bottom:14px;padding:10px 12px;background:#fdf8f5;border-radius:12px">'+esc(post.bio)+'</p>':'')
+    +'<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">'
+    +(post.instagram?'<a href="https://instagram.com/'+esc(post.instagram.replace('@',''))+' target="_blank" style="display:flex;align-items:center;gap:10px;background:#fdf8f5;border-radius:12px;padding:10px 14px;text-decoration:none"><span style="font-size:18px">📷</span><span style="font-size:13px;font-weight:700;color:#c4614a">'+esc(post.instagram)+'</span></a>':'')
+    +(post.tiktok?'<a href="https://tiktok.com/@'+esc(post.tiktok.replace('@',''))+' target="_blank" style="display:flex;align-items:center;gap:10px;background:#fdf8f5;border-radius:12px;padding:10px 14px;text-decoration:none"><span style="font-size:18px">🎵</span><span style="font-size:13px;font-weight:700;color:#c4614a">'+esc(post.tiktok)+'</span></a>':'')
+    +'</div>'
+    +'<button id="profile-close" style="width:100%;padding:12px;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;border:none;border-radius:20px;font-size:14px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif">Close</button>'
     +'</div></div>';
 }
 
@@ -2548,7 +2572,7 @@ function bindAll(){
     var t=document.getElementById("new-post");if(t)state.newPostText=t.value;
     if(!state.newPostText.trim())return;
     var p2=state.profile;
-    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",content:state.newPostText.trim(),comments:0,likes:0}]);
+    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",bio:p2.bio||"",instagram:p2.instagram||"",tiktok:p2.tiktok||"",niche:p2.niche||"",content:state.newPostText.trim(),comments:0,likes:0}]);
     ss("ev_cposts",state.communityPosts);state.newPostText="";render();
   });
   q("vip-post-submit",function(){
@@ -2560,6 +2584,20 @@ function bindAll(){
   });
   q("vip-upsell-btn",function(){state.showUpsell=true;render();});
   qa("[data-del]",function(){var id=parseInt(this.dataset.del);var myEmail=(state.profile&&state.profile.email)||"";var isFounder=myEmail.toLowerCase()==="livingwithsimone@gmail.com";state.communityPosts=state.communityPosts.filter(function(p){if(p.id!==id)return true;var isOwn=p.email&&p.email.toLowerCase()===myEmail.toLowerCase();return !(isFounder||isOwn);});ss("ev_circle",state.communityPosts);render();});
+  qa("[data-profile]",function(){
+    var id=parseInt(this.dataset.profile);
+    var allPosts=COMMUNITY.concat(state.communityPosts).concat(VIP_POSTS).concat(state.vipPosts);
+    var post=allPosts.find(function(p){return p.id===id;});
+    if(post){
+      var myEmail=(state.profile&&state.profile.email)||'';
+      if(post.email&&post.email.toLowerCase()===myEmail.toLowerCase()){
+        post=Object.assign({},post,{bio:state.profile.bio||post.bio||'',instagram:state.profile.instagram||post.instagram||'',tiktok:state.profile.tiktok||post.tiktok||'',niche:state.profile.niche||post.niche||''});
+      }
+      state.showProfileModal=post;render();
+    }
+  });
+  q("profile-close",function(){state.showProfileModal=null;render();});
+  q("profile-overlay",function(e){if(e.target===this){state.showProfileModal=null;render();}});
   qa("[data-like]",function(){var id=parseInt(this.dataset.like);var l=Object.assign({},state.likes);l[id]=!l[id];state.likes=l;ss("ev_likes",l);render();});
   qa("[data-reply-toggle]",function(){
     var id=parseInt(this.dataset.replyToggle);
@@ -2575,7 +2613,8 @@ function bindAll(){
   });
   qa("[data-reply-send]",function(){
     var id=parseInt(this.dataset.replySend);
-    var txt=(state.replyText&&state.replyText[id]||'').trim();
+    var ta=document.querySelector('[data-reply-text="'+id+'"]');
+    var txt=ta?ta.value.trim():(state.replyText&&state.replyText[id]||'').trim();
     if(!txt)return;
     var pr=state.profile;
     var rep={ini:(pr.name||'M')[0].toUpperCase(),name:pr.name||'Mama',text:txt,time:'just now'};
