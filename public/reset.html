@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>Reset Password — Hey Evie</title>
+<title>Reset Password — Hey Evee</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -28,14 +28,14 @@ input:focus{border-color:#c4614a}
 <div class="card">
   <div class="av"><span>E</span></div>
   <h1>Set New Password</h1>
-  <p class="sub">Choose a strong password for your Hey Evie account.</p>
+  <p class="sub">Choose a strong password for your Hey Evee account.</p>
   <div id="msg" style="display:none" class="msg"></div>
   <div id="form-wrap">
     <input type="password" id="pw1" placeholder="New password (8+ chars, number, symbol)"/>
     <input type="password" id="pw2" placeholder="Confirm new password"/>
     <button class="btn" id="submit-btn" onclick="submitReset()">Update My Password</button>
   </div>
-  <p class="back"><a href="https://app.tryheyevie.com">← Back to Hey Evie</a></p>
+  <p class="back"><a href="https://tryheyevee.com">← Back to Hey Evee</a></p>
 </div>
 
 <script>
@@ -66,7 +66,7 @@ async function submitReset(){
   btn.textContent = 'Updating…';
 
   try {
-    var res = await fetch('/api/reset-confirm', {
+    var res = await fetch('https://tryheyevee.com/api/reset-confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: token, password: pw1 })
@@ -76,7 +76,7 @@ async function submitReset(){
     if(data.success){
       document.getElementById('form-wrap').style.display = 'none';
       showMsg('Password updated! Redirecting you to sign in…', 'success');
-      setTimeout(function(){ window.location.href = 'https://app.tryheyevie.com'; }, 2500);
+      setTimeout(function(){ window.location.href = 'https://tryheyevee.com'; }, 2500);
     } else {
       showMsg(data.error || 'Something went wrong. Please try again.', 'error');
       btn.disabled = false;
