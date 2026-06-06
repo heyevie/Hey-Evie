@@ -66,7 +66,7 @@ async function submitReset(){
   btn.textContent = 'Updating…';
 
   try {
-    var res = await fetch('https://tryheyevee.com/api/reset-confirm', {
+    var res = await fetch('/api/reset-confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: token, password: pw1 })
