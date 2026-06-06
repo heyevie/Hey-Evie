@@ -1944,8 +1944,7 @@ function buildCreate(p){
                 +'</div>';
             }).join('')
           :'')
-          +'<button id="gen-hooks" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#1a0d08,#2e1208);color:#fff;border:none;border-radius:18px;padding:13px;font-size:13px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">'
-          +(state.hooksLoading?'Generating…':'&#9825; Generate Fresh AI Hooks')+'</button>';
+          +'';
         })()
       :activeTab==='captions'
         ?buildCaptionVault(niche)
