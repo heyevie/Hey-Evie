@@ -2271,6 +2271,11 @@ function buildUpsell(){
     +'<p style="font-size:9px;font-weight:900;color:#c4614a;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:6px">Founding Member Offer</p>'
     +'<h2 style="font-family:\'Playfair Display\',serif;font-size:20px;color:#1a0d08;text-align:center;margin-bottom:10px;line-height:1.3">Own Hey Evee forever — one-time $497</h2>'
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">'+feats.map(function(f){return '<div style="display:flex;align-items:center;gap:9px"><div style="width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,#c4614a,#d4507a);flex-shrink:0"></div><span style="font-size:13px;color:#3a1e14">'+f+'</span></div>';}).join('')+'</div>'
+    +'<div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:14px;padding:14px;margin:-4px 0 14px">'
+    +'<p style="font-size:9px;font-weight:900;color:rgba(201,150,58,.8);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;text-align:center">VIP Founding Member Value</p>'
+    +[['EVEE AI Creator Coach','$297'],['Creator Academy (8 Courses)','$497'],['Workshops & Action Plans','$197'],['Content Planner','$97'],['Hook Vault','$97'],['Money Dashboard','$97'],['Goal Tracking','$47'],['Mama Circle Community','$197'],['Monthly Group Coaching','$497']].map(function(r){return '<div style="display:flex;justify-content:space-between;margin-bottom:5px"><p style="font-size:11px;color:rgba(255,255,255,.65);margin:0">'+r[0]+'</p><p style="font-size:11px;font-weight:800;color:rgba(201,150,58,.9);margin:0">'+r[1]+'</p></div>';}).join('')
+    +'<div style="border-top:1px solid rgba(255,255,255,.1);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between"><p style="font-size:12px;font-weight:900;color:#fff;margin:0">Total Value</p><p style="font-size:12px;font-weight:900;color:rgba(201,150,58,1);margin:0">$2,023</p></div>'
+    +'</div>'
     +'<div style="text-align:center;margin-bottom:16px"><p style="font-family:\'Playfair Display\',serif;font-size:38px;font-weight:700;color:#c9963a">$497</p><p style="font-size:11px;color:#b09080">one-time · lifetime access</p></div>'
     +'<button id="upsell-yes" style="'+btnP()+'">Claim Lifetime VIP — $497</button>'
     +'<button id="upsell-no" style="width:100%;padding:10px;background:transparent;color:#b09080;border:none;cursor:pointer;font-size:12px;font-family:\'Nunito\',sans-serif;margin-top:4px">Maybe later</button>'
@@ -2680,6 +2685,7 @@ function bindAll(){
   // Upsell
   q("upsell-overlay",function(e){if(e.target===this){state.showUpsell=false;render();}});
   q("upsell-yes",function(){state.showUpsell=false;render();window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
+  q("create-upsell-btn",function(){window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
   q("upsell-no",function(){state.showUpsell=false;render();});
   // Auto-show affirmation once per day on home
   if(state.screen==="main"&&state.tab==="home"&&state.affDismissed!==todayStr()&&!state.showAffirmation){
