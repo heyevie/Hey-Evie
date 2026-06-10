@@ -2128,7 +2128,8 @@ function rPosts(posts){
       +'<div style="width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:900;color:#fff;background:'+(postIsSimone?"#c4614a":post.color||"#c4a090")+';flex-shrink:0">'+post.ini+'</div>'
       +'<div style="flex:1"><div style="font-size:12px;font-weight:800;color:#1a0d08;display:flex;align-items:center;flex-wrap:wrap;gap:4px"><span data-profile="'+post.id+'" style="cursor:pointer">'+post.name+'</span>'
       +(postIsSimone?'<span style="background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:9px;font-weight:900;border-radius:8px;padding:2px 7px">FOUNDER</span>':'')+' </div>'
-      +'<div style="font-size:10px;color:#b09080">'+esc(post.handle||"")+" "+post.time+'</div></div>'
+      +(post.handle?'<div style="font-size:10px;color:#c4614a;font-weight:700">'+esc(post.handle)+'</div>':'')
+      +'<div style="font-size:10px;color:#b09080">'+post.time+'</div></div>'
       +(canDelete?'<button data-del="'+post.id+'" style="background:none;border:none;cursor:pointer;font-size:14px;color:#d4a0a0;padding:4px;flex-shrink:0" title="Delete post">&#128465;</button>':'')+' </div>'
       +'<p style="font-size:14px;color:#1a0d08;line-height:1.65;margin-bottom:12px">'+esc(post.content)+'</p>'
       +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:'+(replyList.length||replyOpen?'8':'0')+'px">'
@@ -2237,6 +2238,7 @@ function buildMe(p){
     +'<p style="font-size:10px;font-weight:900;color:#b8a090;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">My Info</p>'
     +'<input id="me-name" style="'+inp()+'" placeholder="Your name" value="'+esc(p.name||'')+'"/>'
     +'<textarea id="me-bio" style="'+inp()+'height:60px;resize:none" placeholder="Short bio — shown to other mamas in the circle">'+esc(p.bio||'')+'</textarea>'
+    +'<input id="me-username" style="'+inp()+'" placeholder="Your @username (shown in Circle)" value="'+esc(p.username||'')+'"/>'
     +'<input id="me-ig" style="'+inp()+'" placeholder="Instagram @handle" value="'+esc(p.instagram||'')+'"/>'
     +'<input id="me-tiktok" style="'+inp()+'" placeholder="TikTok @handle" value="'+esc(p.tiktok||'')+'"/>'
     +'<input id="me-yt" style="'+inp()+'" placeholder="YouTube channel" value="'+esc(p.youtube||'')+'"/>'
@@ -2623,7 +2625,7 @@ function bindAll(){
   qa("[data-ap]",function(){var i=parseInt(this.dataset.ap);state.expandedPlatform=state.expandedPlatform===i?null:i;render();});
   // Circle
   qa("[data-hcat]",function(){state.hookCategory=this.dataset.hcat;state.hookPage=0;render();});
-  qa("[data-hcopy]",function(){var niche=state.profile.niche||"Mom Lifestyle";var hooks=HOOK_VAULT[niche]||HOOK_VAULT["Mom Lifestyle"];var cat=state.hookCategory||Object.keys(hooks)[0];var h=(hooks[cat]||[])[parseInt(this.dataset.hcopy)];if(h&&navigator.clipboard)navigator.clipboard.writeText(h);});
+  qa("[data-hcopy]",function(){var niche=state.profile.niche||"Mom Lifestyle";var hooks=HOOK_VAULT[niche]||HOOK_VAULT["Mom Lifestyle"];var arr=Array.isArray(hooks)?hooks:(hooks[Object.keys(hooks)[0]]||[]);var h=arr[parseInt(this.dataset.hcopy)];if(h&&navigator.clipboard)navigator.clipboard.writeText(h);});
   qa("[data-fcopy]",function(){var h=(state.freshHooks||[])[parseInt(this.dataset.fcopy)];if(h&&navigator.clipboard)navigator.clipboard.writeText(h);});
   q("hook-page-next",function(){state.hookPage=(state.hookPage||0)+1;render();});
   q("hook-page-reset",function(){state.hookPage=0;render();});
@@ -2642,14 +2644,14 @@ function bindAll(){
     var t=document.getElementById("new-post");if(t)state.newPostText=t.value;
     if(!state.newPostText.trim())return;
     var p2=state.profile;
-    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",bio:p2.bio||"",instagram:p2.instagram||"",tiktok:p2.tiktok||"",niche:p2.niche||"",content:state.newPostText.trim(),comments:0,likes:0}]);
+    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.username||p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",bio:p2.bio||"",instagram:p2.instagram||"",tiktok:p2.tiktok||"",niche:p2.niche||"",content:state.newPostText.trim(),comments:0,likes:0}]);
     ss("ev_cposts",state.communityPosts);state.newPostText="";render();
   });
   q("vip-post-submit",function(){
     var t=document.getElementById("new-vip-post");if(t)state.newPostText=t.value;
     if(!state.newPostText.trim())return;
     var p2=state.profile;
-    state.vipPosts=state.vipPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.instagram||"",time:"just now",tag:"Question",content:state.newPostText.trim(),comments:0,likes:0}]);
+    state.vipPosts=state.vipPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.username||p2.instagram||"",time:"just now",tag:"Question",content:state.newPostText.trim(),comments:0,likes:0}]);
     ss("ev_vposts",state.vipPosts);state.newPostText="";render();
   });
   q("vip-upsell-btn",function(){state.showUpsell=true;render();});
@@ -2713,7 +2715,7 @@ function bindAll(){
   // Me
   q("save-profile",function(){
     var n=document.getElementById("me-name");var b=document.getElementById("me-bio");
-    var ig=document.getElementById("me-ig");var tt=document.getElementById("me-tiktok");var yt=document.getElementById("me-yt");
+    var un=document.getElementById("me-username");var ig=document.getElementById("me-ig");var tt=document.getElementById("me-tiktok");var yt=document.getElementById("me-yt");
     state.profile=Object.assign({},state.profile,{name:n?n.value:state.profile.name,bio:b?b.value:"",instagram:ig?ig.value:"",tiktok:tt?tt.value:"",youtube:yt?yt.value:""});
     save();var btn=document.getElementById("save-profile");if(btn){btn.textContent="Saved ✓";setTimeout(function(){render();},1500);}
   });
