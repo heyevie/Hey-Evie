@@ -1364,6 +1364,8 @@ var state={
   loginMode:"create",loginErr:"",loginForgotSent:false,
   onbStep:0,
   circleTab:"mama",
+  showCertificate:false,
+  certShown:ls('ev_cert',false),
   showProfileModal:null,
   chatOnboarded:ls("ev_chat_ob",false),
   chatStyle:ls("ev_chat_style",""),
@@ -1499,6 +1501,7 @@ function buildMain(){
     +(state.showUpsell?buildUpsell():'')
     +(state.showCelebration?buildCelebration():'')
     +(state.showAffirmation?buildAffModal(aff):'')
+    +(state.showCertificate?buildCertificate():'')
     +(state.showProfileModal?buildProfileModal(state.showProfileModal):'')
     +(state.showUpgradeSuccess?'<div style="position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:600;padding:14px 16px"><div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.3)"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c4614a,#d4507a);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">&#10024;</div><div><p style="font-size:13px;font-weight:800;color:#fff;margin:0 0 2px">Welcome to Lifetime VIP!</p><p style="font-size:11px;color:rgba(255,255,255,.6);margin:0">All courses and features are now unlocked. \u2665</p></div></div></div>':'')
     +buildNav()
@@ -2268,7 +2271,7 @@ function buildMe(p){
     +'<p style="font-size:12px;color:#3a1e14;line-height:1.6">Tap the <strong>three dots menu</strong> in Chrome → tap <strong>"Add to Home Screen"</strong> → tap Add</p>'
     +'</div>'
     +'</div>'
-    +'<div style="text-align:center;padding-top:16px;margin-bottom:10px">'+'<a href="https://tryheyevee.com/privacy.html" target="_blank" style="font-size:11px;color:#b09080;margin:0 8px">Privacy Policy</a>'+'<span style="color:#d4c0b0;font-size:10px">&middot;</span>'+'<a href="https://tryheyevee.com/terms.html" target="_blank" style="font-size:11px;color:#b09080;margin:0 8px">Terms</a>'+'<span style="color:#d4c0b0;font-size:10px">&middot;</span>'+'<a href="mailto:hello@heyevee.com" style="font-size:11px;color:#b09080;margin:0 8px">Contact</a>'+'</div>'
+    +'<div style="text-align:center;padding-top:16px;margin-bottom:10px">'+'<a href="https://app.heyevee.com/privacy.html" target="_blank" style="font-size:11px;color:#b09080;margin:0 8px">Privacy Policy</a>'+'<span style="color:#d4c0b0;font-size:10px">&middot;</span>'+'<a href="https://app.heyevee.com/terms.html" target="_blank" style="font-size:11px;color:#b09080;margin:0 8px">Terms</a>'+'<span style="color:#d4c0b0;font-size:10px">&middot;</span>'+'<a href="mailto:hello@heyevee.com" style="font-size:11px;color:#b09080;margin:0 8px">Contact</a>'+'</div>'
     +'<button id="sign-out" style="width:100%;padding:12px;background:transparent;border:1.5px solid rgba(196,97,74,.2);border-radius:20px;font-size:13px;color:#b09080;cursor:pointer;font-family:\'Nunito\',sans-serif">Sign Out</button>'
     +'</div>';
 }
@@ -2306,6 +2309,7 @@ function buildProfileModal(post){
     +'<div style="flex:1"><p style="font-size:15px;font-weight:800;color:#1a0d08;margin:0">'+esc(post.name||'')+'</p>'
     +(isSimone?'<span style="background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;font-size:9px;font-weight:900;border-radius:8px;padding:2px 7px;margin-top:3px;display:inline-block">FOUNDER</span>':'')
     +(post.niche?'<p style="font-size:11px;color:#c4614a;font-weight:700;margin:4px 0 0">'+esc(post.niche)+'</p>':'')
+    +(post.followers?'<p style="font-size:10px;color:#b09080;margin:3px 0 0">'+esc(post.followers)+'</p>':'')
     +'</div></div>'
     +(post.bio?'<p style="font-size:13px;color:#3a1e14;line-height:1.65;margin-bottom:14px;padding:10px 12px;background:#fdf8f5;border-radius:12px">'+esc(post.bio)+'</p>':'')
     +'<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">'
@@ -2314,6 +2318,30 @@ function buildProfileModal(post){
     +'</div>'
     +'<button id="profile-close" style="width:100%;padding:12px;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;border:none;border-radius:20px;font-size:14px;font-weight:800;cursor:pointer;font-family:\'Nunito\',sans-serif">Close</button>'
     +'</div></div>';
+}
+
+// Certificate
+function buildCertificate(){
+  var p=state.profile;
+  var today=new Date();
+  var dateStr=today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  return '<div style="position:fixed;inset:0;background:rgba(10,5,2,.85);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px" id="cert-overlay">'
+    +'<div style="background:#fff;border-radius:24px;padding:32px 24px;width:100%;max-width:380px;text-align:center;position:relative;overflow:hidden">'
+    +'<div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#c4614a,#d4507a,#c9963a)"></div>'
+    +'<div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#c9963a,#e8b84a);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px">&#127942;</div>'
+    +'<p style="font-size:9px;font-weight:900;color:#c9963a;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px">Certificate of Completion</p>'
+    +'<p style="font-family:\'Playfair Display\',serif;font-size:22px;color:#1a0d08;margin-bottom:4px;line-height:1.3">Hey Evee Creator Academy</p>'
+    +'<p style="font-size:12px;color:#9a7060;margin-bottom:20px">This certifies that</p>'
+    +'<p style="font-family:\'Playfair Display\',serif;font-size:26px;color:#c4614a;margin-bottom:4px;font-style:italic">'+esc(p.name||'Mama')+'</p>'
+    +'<p style="font-size:12px;color:#9a7060;margin-bottom:20px">has successfully completed all 8 courses of the<br/>Hey Evee Creator Academy</p>'
+    +'<div style="background:linear-gradient(135deg,rgba(201,150,58,0.08),rgba(196,97,74,0.06));border-radius:12px;padding:12px;margin-bottom:20px;border:1px solid rgba(201,150,58,0.2)">'
+    +'<p style="font-size:11px;color:#7a4a3a;line-height:1.7;margin:0">CEO Mindset &#9671; Find Your Niche &#9671; UGC Creator &#9671; Brand Deals<br/>Content Strategy &#9671; Monetization &#9671; Scale Your Brand &#9671; CEO Systems</p>'
+    +'</div>'
+    +'<p style="font-size:10px;color:#b09080;margin-bottom:20px">'+dateStr+'</p>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button id="cert-share" style="flex:1;padding:11px;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif">Share &#10022;</button>'
+    +'<button id="cert-close" style="padding:11px 16px;background:#fff;border:1.5px solid rgba(196,97,74,0.2);color:#c4614a;border-radius:16px;font-size:13px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif">Close</button>'
+    +'</div></div></div>';
 }
 
 // ─── Bind All ───
@@ -2520,7 +2548,17 @@ function bindAll(){
     var wasComplete=state.learnProgress[key];
     state.learnProgress[key]=!wasComplete;
     ss("ev_lp",state.learnProgress);
-    if(!wasComplete){state.showCelebration=true;render();setTimeout(function(){state.showCelebration=false;render();},3500);}
+    if(!wasComplete){
+      // Check if all courses complete
+      if(!state.certShown){
+        var total=0;var done=0;
+        COURSES.forEach(function(c){getMods(c).forEach(function(m,mi){
+          total++;if(state.learnProgress["c"+c.id+"m"+mi]||(c.id===state.activeCourse.id&&mi===state.activeModuleIdx))done++;
+        });});
+        if(done>=total&&total>0){state.certShown=true;state.showCertificate=true;ss("ev_cert",true);}
+      }
+      state.showCelebration=true;render();setTimeout(function(){state.showCelebration=false;render();},3500);
+    }
     else{render();}
   });
   // Notes
@@ -2598,6 +2636,13 @@ function bindAll(){
   q("tutorial-toggle",function(){state.showTutorials=!state.showTutorials;render();});
   q("money-upsell-btn",function(){window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
   q("toggle-add",function(){state.showAdd=!state.showAdd;render();});
+  q("cert-close",function(){state.showCertificate=false;render();});
+  q("cert-overlay",function(e){if(e.target===this){state.showCertificate=false;render();}});
+  q("cert-share",function(){
+    var text='I just completed the Hey Evee Creator Academy! \u2728 8 courses on growing my creator business as a mom. Join me at app.heyevee.com';
+    if(navigator.share){navigator.share({title:'Hey Evee Certificate',text:text});}
+    else if(navigator.clipboard){navigator.clipboard.writeText(text);alert('Share text copied to clipboard!');}
+  });
   qa("[data-deal-status]",function(){
     var parts=this.dataset.dealStatus.split('-');
     var di=parseInt(parts[0]);var newStatus=parts[1];
@@ -2625,7 +2670,7 @@ function bindAll(){
   qa("[data-ap]",function(){var i=parseInt(this.dataset.ap);state.expandedPlatform=state.expandedPlatform===i?null:i;render();});
   // Circle
   qa("[data-hcat]",function(){state.hookCategory=this.dataset.hcat;state.hookPage=0;render();});
-  qa("[data-hcopy]",function(){var niche=state.profile.niche||"Mom Lifestyle";var hooks=HOOK_VAULT[niche]||HOOK_VAULT["Mom Lifestyle"];var arr=Array.isArray(hooks)?hooks:(hooks[Object.keys(hooks)[0]]||[]);var h=arr[parseInt(this.dataset.hcopy)];if(h&&navigator.clipboard)navigator.clipboard.writeText(h);});
+  qa("[data-hcopy]",function(){var niche=state.profile.niche||"Mom Lifestyle";var hooks=HOOK_VAULT[niche]||HOOK_VAULT["Mom Lifestyle"];var arr=Array.isArray(hooks)?hooks:(hooks[Object.keys(hooks)[0]]||[]);var h=arr[parseInt(this.dataset.hcopy)];if(h&&navigator.clipboard){navigator.clipboard.writeText(h);var btn=this;var orig=btn.textContent;btn.textContent='Copied!';btn.style.background='rgba(42,122,80,0.12)';btn.style.color='#2a7a50';setTimeout(function(){btn.textContent=orig;btn.style.background='rgba(196,97,74,.08)';btn.style.color='#c4614a';},1800);}});
   qa("[data-fcopy]",function(){var h=(state.freshHooks||[])[parseInt(this.dataset.fcopy)];if(h&&navigator.clipboard)navigator.clipboard.writeText(h);});
   q("hook-page-next",function(){state.hookPage=(state.hookPage||0)+1;render();});
   q("hook-page-reset",function(){state.hookPage=0;render();});
@@ -2644,7 +2689,7 @@ function bindAll(){
     var t=document.getElementById("new-post");if(t)state.newPostText=t.value;
     if(!state.newPostText.trim())return;
     var p2=state.profile;
-    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.username||p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",bio:p2.bio||"",instagram:p2.instagram||"",tiktok:p2.tiktok||"",niche:p2.niche||"",content:state.newPostText.trim(),comments:0,likes:0}]);
+    state.communityPosts=state.communityPosts.concat([{id:Date.now(),ini:(p2.name||"M")[0].toUpperCase(),color:"#c4a090",name:p2.name||"Mama",handle:p2.username||p2.instagram||"",time:"just now",tag:"Win",email:p2.email||"",bio:p2.bio||"",username:p2.username||"",instagram:p2.instagram||"",tiktok:p2.tiktok||"",niche:p2.niche||"",followers:p2.followers||"",content:state.newPostText.trim(),comments:0,likes:0}]);
     ss("ev_cposts",state.communityPosts);state.newPostText="";render();
   });
   q("vip-post-submit",function(){
@@ -2716,7 +2761,7 @@ function bindAll(){
   q("save-profile",function(){
     var n=document.getElementById("me-name");var b=document.getElementById("me-bio");
     var un=document.getElementById("me-username");var ig=document.getElementById("me-ig");var tt=document.getElementById("me-tiktok");var yt=document.getElementById("me-yt");
-    state.profile=Object.assign({},state.profile,{name:n?n.value:state.profile.name,bio:b?b.value:"",instagram:ig?ig.value:"",tiktok:tt?tt.value:"",youtube:yt?yt.value:""});
+    state.profile=Object.assign({},state.profile,{name:n?n.value:state.profile.name,bio:b?b.value:"",username:un?un.value:"",instagram:ig?ig.value:"",tiktok:tt?tt.value:"",youtube:yt?yt.value:"",followers:state.profile.followers||""});
     save();var btn=document.getElementById("save-profile");if(btn){btn.textContent="Saved ✓";setTimeout(function(){render();},1500);}
   });
   qa("[data-mn]",function(){state.profile=Object.assign({},state.profile,{niche:this.dataset.mn});save();render();});
