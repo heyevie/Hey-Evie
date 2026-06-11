@@ -35,7 +35,7 @@ input:focus{border-color:#c4614a}
     <input type="password" id="pw2" placeholder="Confirm new password"/>
     <button class="btn" id="submit-btn" onclick="submitReset()">Update My Password</button>
   </div>
-  <p class="back"><a href="https://tryheyevee.com">← Back to Hey Evee</a></p>
+  <p class="back"><a href="https://app.heyevee.com">← Back to Hey Evee</a></p>
 </div>
 
 <script>
@@ -76,7 +76,7 @@ async function submitReset(){
     if(data.success){
       document.getElementById('form-wrap').style.display = 'none';
       showMsg('Password updated! Redirecting you to sign in…', 'success');
-      setTimeout(function(){ window.location.href = 'https://tryheyevee.com'; }, 2500);
+      setTimeout(function(){ window.location.href = 'https://app.heyevee.com'; }, 2500);
     } else {
       showMsg(data.error || 'Something went wrong. Please try again.', 'error');
       btn.disabled = false;
