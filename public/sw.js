@@ -1,5 +1,5 @@
 // Hey Evee Service Worker
-const CACHE = 'heyevee-v1';
+const CACHE = 'heyevee-v2';
 const STATIC = ['/'];
 
 self.addEventListener('install', function(e) {
