@@ -1335,8 +1335,8 @@ var VIP_POSTS=[
 function checkMembership(email,callback){
   fetch("/api/airtable",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.trim().toLowerCase()})})
   .then(function(r){return r.json();})
-  .then(function(d){callback({plan:d.plan||"starter",status:d.status||"active",name:d.name||"",password:d.password||""}); })
-  .catch(function(){callback({plan:"starter",status:"active",name:"",password:""});});
+  .then(function(d){callback({plan:d.plan||"starter",status:d.status||"active",name:d.name||"",password:d.password||"",niche:d.niche||"",bio:d.bio||"",instagram:d.instagram||"",tiktok:d.tiktok||"",youtube:d.youtube||"",username:d.username||"",followers:d.followers||""});})
+  .catch(function(){callback({plan:"starter",status:"active",name:"",password:"",niche:"",bio:"",instagram:"",tiktok:"",youtube:"",username:"",followers:""});});
 }
 var DAYLETTERS=["S","M","T","W","T","F","S"];
 
@@ -1361,7 +1361,7 @@ var state={
   loginName:"",loginEmail:"",loginPass:"",loginPass2:"",loginCode:"",
   loginLoading:false,
   loginCodeErr:"",loginCodePlan:null,showCodeInput:false,
-  loginMode:"create",loginErr:"",loginForgotSent:false,
+  loginMode:"landing",loginErr:"",loginForgotSent:false,
   onbStep:0,
   circleTab:"mama",
   showCertificate:false,
@@ -1440,29 +1440,51 @@ function buildSplash(){
 // ─── Login ───
 function buildLogin(){
   var c=state.loginMode==="create";
+  var s=state.loginMode==="signin";
+  var landing=state.loginMode==="landing";
   var passErr="";
   if(c&&state.loginPass&&state.loginPass.length>0&&state.loginPass.length<8)passErr="Password must be at least 8 characters";
   else if(c&&state.loginPass&&state.loginPass.length>=8&&!/[0-9]/.test(state.loginPass))passErr="Password must include a number";
   else if(c&&state.loginPass&&state.loginPass.length>=8&&/[0-9]/.test(state.loginPass)&&!/[^a-zA-Z0-9]/.test(state.loginPass))passErr="Password must include a symbol (!, @, #, etc.)";
   else if(c&&state.loginPass2&&state.loginPass!==state.loginPass2)passErr="Passwords do not match";
+
+  if(landing){
+    return '<div style="min-height:100vh;background:linear-gradient(160deg,#fdf4f0 0%,#fbe8e0 50%,#f9e8f2 100%);display:flex;flex-direction:column;overflow-y:auto">'
+      +'<div style="flex:1;padding:80px 32px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center">'
+      +'<div style="position:relative;margin-bottom:28px">'
+      +'<div style="width:140px;height:140px;border-radius:50%;background:linear-gradient(145deg,#c4614a,#d4507a);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(196,97,74,0.25)">'
+      +'<span style="font-family:\'Playfair Display\',serif;font-size:70px;font-weight:700;color:#fff;line-height:1">E</span>'
+      +'</div>'
+      +'<span style="position:absolute;top:-4px;right:-8px;font-size:22px;color:#c9963a">&#10022;</span>'
+      +'</div>'
+      +'<h1 style="font-family:\'Playfair Display\',serif;font-size:42px;font-weight:700;color:#1a0d08;margin:0 0 10px;text-align:center">Hey Evee</h1>'
+      +'<p style="font-size:16px;color:#7a4a3a;text-align:center;margin:0 0 4px">Your content bestie.</p>'
+      +'<p style="font-size:16px;color:#7a4a3a;text-align:center;margin:0 0 44px">Built for moms who mean business.</p>'
+      +'<button id="li-go-create" style="width:100%;max-width:360px;padding:17px;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;border:none;border-radius:50px;font-size:16px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-bottom:14px;box-shadow:0 6px 20px rgba(196,97,74,0.3)">Create Account</button>'
+      +'<button id="li-go-signin" style="width:100%;max-width:360px;padding:17px;background:rgba(196,97,74,0.08);color:#c4614a;border:1.5px solid rgba(196,97,74,0.15);border-radius:50px;font-size:16px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-bottom:20px">Sign In</button>'
+      +'<p id="li-go-code" style="font-size:13px;color:#b09080;text-align:center;cursor:pointer">Have an access code?</p>'
+      +(state.loginErr?'<p style="font-size:12px;font-weight:700;color:#e05050;margin-top:12px;text-align:center">'+state.loginErr+'</p>':'')
+      +'</div></div>';
+  }
+
   return '<div style="min-height:100vh;background:'+BG+';display:flex;flex-direction:column;overflow-y:auto">'
     +'<div style="flex:1;padding:44px 24px 40px;display:flex;flex-direction:column;align-items:center">'
-    +avC(72,'margin-bottom:12px')
-    +'<div style="font-family:\'Playfair Display\',serif;font-size:32px;font-weight:700;color:#1a0d08;margin-bottom:2px;text-align:center">Hey Evee</div>'
-    +'<h2 style="font-family:\'Playfair Display\',serif;font-size:18px;color:#7a4a3a;margin:8px 0 4px;text-align:center">'+(c?"Welcome, Mama":"Welcome back")+'</h2>'
-    +'<p style="font-size:12px;color:#9a7060;text-align:center;margin-bottom:20px">'+(c?"Create your account to get started":"Sign in to continue your journey")+'</p>'
+    +'<button id="li-back" style="align-self:flex-start;background:none;border:none;font-size:13px;font-weight:800;color:#9a7060;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-bottom:20px;padding:0">&#8592; Back</button>'
+    +avC(64,'margin-bottom:10px')
+    +'<h2 style="font-family:\'Playfair Display\',serif;font-size:22px;color:#1a0d08;margin:6px 0 4px;text-align:center">'+(c?'Create Your Account':'Welcome Back')+'</h2>'
+    +'<p style="font-size:12px;color:#9a7060;text-align:center;margin-bottom:20px">'+(c?'Create your account to get started':'Sign in to continue your journey')+'</p>'
     +(c?'<input id="li-name" style="'+inp()+'" placeholder="Your first name" value="'+esc(state.loginName)+'"/>':'')
     +'<input id="li-email" style="'+inp()+'" placeholder="Email address" value="'+esc(state.loginEmail)+'"/>'
-    +'<input id="li-pass" type="password" style="'+inp()+'border-color:'+(passErr&&state.loginPass?"#e05050":"rgba(196,97,74,0.2)")+'" placeholder="'+(c?"Create a password (8+ chars, number, symbol)":"Password")+'" value="'+esc(state.loginPass)+'"/>'
-    +(c?'<input id="li-pass2" type="password" style="'+inp()+'border-color:'+(state.loginPass2&&state.loginPass!==state.loginPass2?"#e05050":"rgba(196,97,74,0.2)")+'" placeholder="Confirm your password" value="'+esc(state.loginPass2)+'"/>':'')
+    +'<input id="li-pass" type="password" style="'+inp()+'border-color:'+(passErr&&state.loginPass?"#e05050":"rgba(196,97,74,.2)")+'" placeholder="Password" value="'+esc(state.loginPass)+'"/>'
+    +(c?'<input id="li-pass2" type="password" style="'+inp()+'border-color:'+(state.loginPass2&&state.loginPass!==state.loginPass2?"#e05050":"rgba(196,97,74,.2)")+'" placeholder="Confirm password" value="'+esc(state.loginPass2)+'"/>':'')
     +(passErr&&(state.loginPass||state.loginPass2)?'<p style="font-size:12px;color:#e05050;margin-bottom:10px;font-weight:700">'+passErr+'</p>':'')
     +(state.loginLoading
-      ?'<div style="text-align:center;padding:12px 0"><p style="font-size:13px;color:#c4614a;font-weight:700">Verifying your account…</p></div>'
-      :(c?'<p style="font-size:11px;color:#9a7060;text-align:center;margin-bottom:12px;line-height:1.6">Access is verified automatically with the email you used to purchase. No code needed.</p>':''))
-    +(state.loginForgotSent?'<div style="background:#edf6f1;border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center"><p style="font-size:13px;font-weight:700;color:#2a7a50">Reset link sent! Check your email.</p><p style="font-size:11px;color:#9a7060;margin-top:4px">Didn\'t get it? Check your spam folder.</p></div>':'')
+      ?'<div style="text-align:center;padding:12px 0"><p style="font-size:13px;color:#c4614a;font-weight:700">Verifying...</p></div>'
+      :(c?'<p style="font-size:11px;color:#9a7060;text-align:center;margin-bottom:12px;line-height:1.6">Access is verified through your Stripe purchase. Need help? <a href="mailto:hello@heyevee.com" style="color:#c4614a;font-weight:700">hello@heyevee.com</a></p>':''))
+    +(state.loginForgotSent?'<div style="background:#edf6f1;border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center"><p style="font-size:13px;font-weight:700;color:#2a7a50">Reset email sent! Check your inbox.</p></div>':'')
     +(state.loginErr?'<p style="font-size:12px;font-weight:700;color:#e05050;margin-bottom:8px;text-align:center">'+state.loginErr+'</p>':'')
     +'<button id="li-submit" style="'+btnP()+'margin-top:4px">'+(c?'Create My Account':'Sign In')+'</button>'
-    +(state.loginMode==="signin"?'<p style="font-size:12px;text-align:center;margin-top:10px"><span id="forgot-pw" style="color:#c4614a;font-weight:700;cursor:pointer;font-size:13px">Forgot your password?</span></p>':'')+'<p style="font-size:12px;color:#9a7060;margin-top:8px;text-align:center">'+(c?'Already have an account? ':'New here? ')+'<span id="li-switch" style="color:#c4614a;font-weight:700;cursor:pointer">'+(c?'Sign in':'Create account')+'</span></p>'
+    +(s?'<p style="font-size:12px;text-align:center;margin-top:10px"><span id="forgot-pw" style="color:#c4614a;font-weight:700;cursor:pointer">Forgot your password?</span></p>':'')
     +'</div></div>';
 }
 
@@ -1900,7 +1922,7 @@ function buildCaptionVault(niche){
       return '<div style="background:#fff;border:1px solid rgba(196,97,74,0.1);border-radius:12px;padding:13px;margin-bottom:8px">'
         +'<p style="font-size:11px;font-weight:900;color:#c4614a;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">'+cap.label+'</p>'
         +'<pre style="font-size:12px;color:#3a1e14;line-height:1.65;white-space:pre-wrap;font-family:\'Nunito\',sans-serif;margin-bottom:8px">'+esc(cap.template)+'</pre>'
-        +'<div onclick="if(navigator.clipboard)navigator.clipboard.writeText(this.dataset.text)" data-text="'+esc(cap.template)+'" style="font-size:10px;font-weight:700;color:'+(isCopied?"#4caf85":"#c4614a")+';cursor:pointer;padding:6px 10px;background:'+(isCopied?"rgba(76,175,133,.1)":"rgba(196,97,74,.06)")+';border-radius:8px;display:inline-block">'+(isCopied?"✓ Copied!":"Tap to copy template")+'</div>'
+        +'<div onclick="heyeveeCopy(this)" data-text="'+esc(cap.template)+'" style="font-size:10px;font-weight:700;color:'+(isCopied?"#4caf85":"#c4614a")+';cursor:pointer;padding:6px 10px;background:'+(isCopied?"rgba(76,175,133,.1)":"rgba(196,97,74,.06)")+';border-radius:8px;display:inline-block">'+(isCopied?"✓ Copied!":"Tap to copy template")+'</div>'
         +'</div>';
     }).join('');
 }
@@ -2046,9 +2068,42 @@ function buildMoney(p,income){
       +'<div style="background:linear-gradient(145deg,#1a0d08,#2e1208);border-radius:16px;padding:16px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">'
       +'<div><p style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px">Money Dashboard</p>'
       +'<p style="font-size:11px;color:rgba(255,255,255,.5)">Track income, goals and brand deals</p></div>'
-      +'<button id="money-upsell-btn" style="background:linear-gradient(135deg,#c9963a,#e8b84a);color:#1a0d08;border:none;border-radius:14px;padding:8px 14px;font-size:11px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif;flex-shrink:0">VIP Only</button>'
+      +'<button onclick="window.location.href=\'https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03\'" style="background:linear-gradient(135deg,#c9963a,#e8b84a);color:#1a0d08;border:none;border-radius:14px;padding:8px 14px;font-size:11px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif;flex-shrink:0">VIP Only</button>'
       +'</div>'
-      +'<p style="font-size:10px;font-weight:900;color:#b8a090;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Affiliate Platforms</p>'
+      +'<p style="font-size:10px;font-weight:900;color:#b8a090;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Rate Calculator</p>'
+    +'<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid rgba(196,97,74,.08)">'
+    +'<p style="font-size:12px;color:#9a7060;margin-bottom:14px;line-height:1.6">Not sure what to charge? Enter your stats and get your recommended rates instantly.</p>'
+    +'<div style="margin-bottom:10px"><p style="font-size:11px;font-weight:800;color:#1a0d08;margin-bottom:5px">Follower Count</p>'
+    +'<input id="calc-followers" type="number" placeholder="e.g. 5000" style="width:100%;padding:10px 12px;border:1.5px solid rgba(196,97,74,.2);border-radius:12px;font-size:14px;font-family:\'Nunito\',sans-serif;color:#1a0d08;outline:none"/></div>'
+    +'<div style="margin-bottom:10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+    +'<p style="font-size:11px;font-weight:800;color:#1a0d08;margin:0">Avg Engagement Rate (%)</p>'
+    +'<button id="eng-help-toggle" style="font-size:10px;font-weight:800;color:#c4614a;background:rgba(196,97,74,.08);border:none;border-radius:8px;padding:3px 10px;cursor:pointer;font-family:\'Nunito\',sans-serif">How to find mine</button>'
+    +'</div>'
+    +'<div id="eng-helper" style="display:none;background:#fdf8f5;border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid rgba(196,97,74,.1)">'
+    +'<p style="font-size:11px;font-weight:900;color:#c4614a;margin-bottom:8px">Calculate your engagement rate:</p>'
+    +'<p style="font-size:11px;color:#9a7060;margin-bottom:8px;line-height:1.6">Pick your last 3 posts. Add up the total likes + comments on all 3, divide by 3 to get your average, then divide by your follower count and multiply by 100.</p>'
+    +'<div style="display:flex;gap:6px;margin-bottom:6px">'
+    +'<input id="eng-likes" type="number" placeholder="Total likes" style="flex:1;padding:8px 10px;border:1.5px solid rgba(196,97,74,.2);border-radius:10px;font-size:13px;font-family:\'Nunito\',sans-serif;color:#1a0d08;outline:none"/>'
+    +'<input id="eng-comments" type="number" placeholder="Total comments" style="flex:1;padding:8px 10px;border:1.5px solid rgba(196,97,74,.2);border-radius:10px;font-size:13px;font-family:\'Nunito\',sans-serif;color:#1a0d08;outline:none"/>'
+    +'<input id="eng-posts" type="number" placeholder="# posts" value="3" style="width:70px;padding:8px 10px;border:1.5px solid rgba(196,97,74,.2);border-radius:10px;font-size:13px;font-family:\'Nunito\',sans-serif;color:#1a0d08;outline:none"/>'
+    +'</div>'
+    +'<button id="eng-calc" style="width:100%;padding:9px;background:rgba(196,97,74,.1);color:#c4614a;border:1.5px solid rgba(196,97,74,.2);border-radius:10px;font-size:12px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif">Calculate &#8250;</button>'
+    +'<p id="eng-result" style="font-size:12px;font-weight:900;color:#c4614a;margin-top:8px;display:none"></p>'
+    +'</div>'
+    +'<input id="calc-engagement" type="number" placeholder="e.g. 3.5" step="0.1" style="width:100%;padding:10px 12px;border:1.5px solid rgba(196,97,74,.2);border-radius:12px;font-size:14px;font-family:\'Nunito\',sans-serif;color:#1a0d08;outline:none"/></div>'
+    +'<div style="margin-bottom:12px"><p style="font-size:11px;font-weight:800;color:#1a0d08;margin-bottom:5px">Your Niche</p>'
+    +'<select id="calc-niche" style="width:100%;padding:10px 12px;border:1.5px solid rgba(196,97,74,.2);border-radius:12px;font-size:14px;font-family:\'Nunito\',sans-serif;color:#1a0d08;background:#fff;outline:none">'
+    +'<option value="1">Mom Lifestyle</option><option value="1.2">Fitness &amp; Wellness</option><option value="1.3">Beauty &amp; Fashion</option><option value="1.1">Food &amp; Recipes</option><option value="1">Faith &amp; Motherhood</option><option value="1.4">Finance &amp; Business</option><option value="1.1">Travel &amp; Adventure</option><option value="1">DIY &amp; Home</option><option value="1">Clean &amp; Organize</option><option value="1">Daily Routines</option>'
+    +'</select></div>'
+    +'<button id="calc-rate" style="width:100%;padding:12px;background:linear-gradient(135deg,#c4614a,#d4507a);color:#fff;border:none;border-radius:16px;font-size:14px;font-weight:900;cursor:pointer;font-family:\'Nunito\',sans-serif;margin-bottom:12px">Calculate My Rate &#8250;</button>'
+    +'<div id="calc-results" style="display:none">'
+    +'<div style="background:linear-gradient(135deg,#1a0d08,#2e1208);border-radius:14px;padding:16px">'
+    +'<p style="font-size:9px;font-weight:900;color:rgba(201,150,58,.8);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Your Recommended Rates</p>'
+    +'<div id="calc-output"></div>'
+    +'<p style="font-size:10px;color:rgba(255,255,255,.4);margin-top:10px;line-height:1.6">Starting point estimates. Your rate may be higher based on content quality and niche authority.</p>'
+    +'</div></div></div>'
+    +'<p style="font-size:10px;font-weight:900;color:#b8a090;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">Affiliate Platforms</p>'
       +AFFILIATE_PLATFORMS.map(function(af,i){
         var open=state.expandedPlatform===i;
         return '<div style="background:#fff;border-radius:14px;overflow:hidden;margin-bottom:8px;border:1px solid rgba(196,97,74,.08)">'
@@ -2244,7 +2299,10 @@ function buildMe(p){
     +'<input id="me-username" style="'+inp()+'" placeholder="Your @username (shown in Circle)" value="'+esc(p.username||'')+'"/>'
     +'<input id="me-ig" style="'+inp()+'" placeholder="Instagram @handle" value="'+esc(p.instagram||'')+'"/>'
     +'<input id="me-tiktok" style="'+inp()+'" placeholder="TikTok @handle" value="'+esc(p.tiktok||'')+'"/>'
-    +'<input id="me-yt" style="'+inp()+'" placeholder="YouTube channel" value="'+esc(p.youtube||'')+'"/>'
+    +'<div style="position:relative">'
+    +'<input id="me-yt" style="'+inp()+'padding-left:36px" placeholder="YouTube channel" value="'+esc(p.youtube||'')+'"/>'
+    +'<span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#c4614a"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg></span>'
+    +'</div>'
     +'<button id="save-profile" style="'+btnP()+'margin-top:2px">Save Profile</button>'
     +'</div>'
     +'<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid rgba(196,97,74,.08)">'
@@ -2344,6 +2402,14 @@ function buildCertificate(){
     +'</div></div></div>';
 }
 
+function heyeveeCopy(el){
+  var text=el.dataset.text||el.dataset.copy||'';
+  var orig=el.textContent;
+  var ok=function(){el.textContent='Copied!';el.style.color='#4caf85';el.style.background='rgba(42,122,80,0.12)';setTimeout(function(){el.textContent=orig;el.style.color='';el.style.background='';},1800);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok).catch(function(){var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(t);ok();});}
+  else{var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(t);ok();}
+}
+
 // ─── Bind All ───
 function buildCelebration(){
   var msgs=['Look at you, mama! You are actually doing it.', 'Yes! Another module down. Evee is proud of you.', 'You showed up today and that is everything.', 'That is your CEO energy right there.', 'One step closer, mama. Keep going.', 'You are building something real. Do not stop.', 'Progress over perfection — and you just made progress.', 'That just happened! Look at you go.'];
@@ -2381,6 +2447,10 @@ function bindAll(){
   };}
   q("li-show-code",function(){state.showCodeInput=true;render();});
   q("li-switch",function(){state.loginMode=state.loginMode==="create"?"signin":"create";state.loginErr="";render();});
+  q("li-go-create",function(){state.loginMode="create";state.loginErr="";render();});
+  q("li-go-code",function(){state.loginMode="create";state.loginErr="";render();});
+  q("li-go-signin",function(){state.loginMode="signin";state.loginErr="";render();});
+  q("li-back",function(){state.loginMode="landing";state.loginErr="";render();});
   q("forgot-pw",function(){
     var e=document.getElementById("li-email");if(e)state.loginEmail=e.value;
     if(!state.loginEmail.trim()){state.loginErr="Please enter your email address first";render();return;}
@@ -2444,9 +2514,11 @@ function bindAll(){
         var saved2=ls("ev_profile",{});
         var airtablePass=membership.password||"";
         var localPass=saved2.password||"";
-        var passMatch=airtablePass
-          ? airtablePass===state.loginPass
-          : (saved2.email===state.loginEmail&&localPass===state.loginPass);
+        var enteredPass=state.loginPass;
+        var passMatch=false;
+        if(airtablePass&&airtablePass===enteredPass) passMatch=true;
+        else if(!airtablePass&&localPass&&localPass===enteredPass) passMatch=true;
+        else if(!airtablePass&&!localPass) passMatch=true; // new account no password yet
         if(!passMatch){
           state.loginErr="Email or password is incorrect";
           render();return;
@@ -2643,6 +2715,59 @@ function bindAll(){
   q("tutorial-toggle",function(){state.showTutorials=!state.showTutorials;render();});
   q("money-upsell-btn",function(){window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
   q("toggle-add",function(){state.showAdd=!state.showAdd;render();});
+  q("eng-help-toggle",function(){
+    var el=document.getElementById('eng-helper');
+    if(el) el.style.display=el.style.display==='none'?'block':'none';
+    this.textContent=document.getElementById('eng-helper').style.display==='block'?'Hide':'How to find mine';
+  });
+  q("eng-calc",function(){
+    var likes=parseInt(document.getElementById('eng-likes').value)||0;
+    var comments=parseInt(document.getElementById('eng-comments').value)||0;
+    var posts=parseInt(document.getElementById('eng-posts').value)||3;
+    var followers=parseInt(document.getElementById('calc-followers').value)||0;
+    if(!likes&&!comments){alert('Enter your likes and comments first.');return;}
+    if(!followers){alert('Enter your follower count above first.');return;}
+    var avgInteractions=(likes+comments)/posts;
+    var rate=((avgInteractions/followers)*100).toFixed(2);
+    var result=document.getElementById('eng-result');
+    if(result){
+      result.style.display='block';
+      var label=rate>=6?'Excellent':rate>=3?'Good':rate>=1?'Average':'Below Average';
+      result.textContent='Your engagement rate is '+rate+'% — '+label+'! Tap to auto-fill →';
+      result.style.cursor='pointer';
+      result.onclick=function(){
+        var engInput=document.getElementById('calc-engagement');
+        if(engInput){engInput.value=rate;}
+        result.textContent=rate+'% filled in ✓';
+      };
+    }
+  });
+  q("calc-rate",function(){
+    var followers=parseInt(document.getElementById('calc-followers').value)||0;
+    var engagement=parseFloat(document.getElementById('calc-engagement').value)||0;
+    var niche=parseFloat(document.getElementById('calc-niche').value)||1;
+    if(!followers||!engagement){alert('Please enter your follower count and engagement rate.');return;}
+    // Base rate formula: followers/1000 * engagement multiplier * niche multiplier
+    var base=Math.max(50,(followers/1000)*engagement*niche*10);
+    var rates=[
+      {label:'Instagram Feed Post',val:Math.round(base*1.2/5)*5},
+      {label:'Instagram Reel',val:Math.round(base*1.5/5)*5},
+      {label:'TikTok Video',val:Math.round(base*1.3/5)*5},
+      {label:'Instagram Story (3 slides)',val:Math.round(base*0.6/5)*5},
+      {label:'UGC Video (brand use only)',val:Math.round(base*0.9/5)*5},
+      {label:'Full Package (Feed + Reel + Stories)',val:Math.round(base*2.8/5)*5},
+    ];
+    var out=document.getElementById('calc-output');
+    if(out){
+      out.innerHTML=rates.map(function(r){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+          +'<p style="font-size:12px;color:rgba(255,255,255,.7);margin:0">'+r.label+'</p>'
+          +'<p style="font-size:14px;font-weight:900;color:rgba(201,150,58,1);margin:0">$'+r.val.toLocaleString()+'</p>'
+          +'</div>';
+      }).join('');
+    }
+    document.getElementById('calc-results').style.display='block';
+  });
   q("cert-close",function(){state.showCertificate=false;render();});
   q("cert-overlay",function(e){if(e.target===this){state.showCertificate=false;render();}});
   q("cert-share",function(){
@@ -2795,7 +2920,7 @@ function bindAll(){
   // Upsell
   q("upsell-overlay",function(e){if(e.target===this){state.showUpsell=false;render();}});
   q("upsell-yes",function(){state.showUpsell=false;render();window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
-  q("create-upsell-btn",function(){window.location.href="https://buy.stripe.com/3cI7sNe9n69h7GBcE90co03";});
+  
   q("upsell-no",function(){state.showUpsell=false;render();});
   // Auto-show affirmation once per day on home
   if(state.screen==="main"&&state.tab==="home"&&state.affDismissed!==todayStr()&&!state.showAffirmation){
